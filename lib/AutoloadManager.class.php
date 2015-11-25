@@ -39,7 +39,7 @@ class AutoloadManager
 		return static::$___instance;
 	}
 	
-	public function autoload()
+	public function autoload($class)
 	{
 	}
 }
