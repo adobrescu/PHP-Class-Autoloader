@@ -44,8 +44,36 @@ class AutoloadManager
 	{
 		
 	}
-	protected function getSourceFileNames()
+	protected function getSourceFileNames($sourcesDirs=null)
 	{
+		if(!$sourcesDirs)
+		{
+			$sourcesDirs=$this->sourcesDirs;
+		}
+		if(!is_array($sourcesDirs))
+		{
+			$sourcesDirs=array($sourcesDirs);
+		}
+		
+		$sourceFileNames=array();
+		
+		foreach($sourcesDirs as $sourceDir)
+		{
+			if($files=glob($sourceDir.'/*'))
+			{
+				foreach($files as $file)
+				{
+					if(is_dir($file))
+					{
+						$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
+						continue;
+					}
+					$sourceFileNames[]=$file;
+				}
+			}
+		}
+		
+		return $sourceFileNames;
 	}
 	protected function getDeclaredClasses()
 	{
