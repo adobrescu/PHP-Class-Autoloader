@@ -91,14 +91,43 @@ class AutoloadManager
 				{
 					foreach($declaredClasses as $className=>$classInfo)
 					{
-						$this->declaredClasses[$className]=$sourceFileName;
+						$this->declaredClasses[$className]=$this->mapPath2ThisDir($sourceFileName); //file names must be relative to the dir containing this class
 					}
 				}
 			}
 		}
 		return $this->declaredClasses;
 	}
-	
+	protected function mapPath2ThisDir($path)
+	{
+		$path=realpath($path);
+		$DIR=__DIR__;
+		
+		//remove from $path and __DIR__ the common starting path 
+		$pathMinLen=min(strlen($path), strlen($DIR));
+		
+		for($i=0; $i<$pathMinLen; $i++)
+		{
+			if($path[$i]!=$DIR[$i])
+			{
+				break;
+			}
+		}
+		
+		
+		$path=substr($path, $i);
+		$DIR=substr($DIR, $i);
+		
+		//format relative path:
+		//preppend	to remaining $path as many '../' as '/' are found in remaining __DIR__ + 1
+		
+		return str_repeat('../', 
+								substr_count($DIR, '/')+1
+						).
+				$path;
+		
+		
+	}
 	public function debugGetSourceFileNames()
 	{
 		return $this->getSourceFileNames();
