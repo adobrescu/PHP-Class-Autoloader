@@ -21,11 +21,11 @@ class AutoloadManager
 		$this->sourcesDirs=$sourcesDirs;
 		if(is_dir($configFileName))
 		{
-			$this->configFileName=$configFileName.'/autoload-manager-config.php';
+			$this->configFileName=realpath($configFileName.'/autoload-manager-config.php');
 		}
 		else
 		{
-			$this->configFileName=$configFileName;
+			$this->configFileName=realpath($configFileName);
 		}
 		
 		$this->forceScanFiles=$forceScanFiles;
@@ -45,6 +45,12 @@ class AutoloadManager
 	}
 	public function __destruct()
 	{
+		//save declared classes in the config file
+		//if there was any scanning
+		if($this->sourcesDirs || $this->forceScanFiles)
+		{
+			file_put_contents($this->configFileName, '<?php'.PHP_EOL.'$this->declaredClasses='.var_export($this->declaredClasses, true).';');
+		}
 	}
 	public function autoload($class)
 	{
