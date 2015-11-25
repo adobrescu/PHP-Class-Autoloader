@@ -14,11 +14,22 @@ class AutoloadManager
 	
 	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles)
 	{
+		
+		/**
+		 * - if no $sourcesDirs are specified then declared classes info is loaded from the config file
+		 * 
+		 * - if $sourcesDirs specified $forceScanFiles is false the scan will detect only what files were added or removed to/from the sources and will scan only the new ones
+		 *	 if class was moved from one file to another:
+		 * 
+		 * - $forceScanFiles forces a full scan of the sources
+		 * 
+		 */
 		if(!is_array($sourcesDirs))
 		{
 			$sourcesDirs=array($sourcesDirs);
 		}
 		$this->sourcesDirs=$sourcesDirs;
+		
 		if(is_dir($configFileName))
 		{
 			$this->configFileName=realpath($configFileName.'/autoload-manager-config.php');
@@ -28,7 +39,12 @@ class AutoloadManager
 			$this->configFileName=realpath($configFileName);
 		}
 		
-		$this->forceScanFiles=$forceScanFiles;
+		$this->forceScanFiles=$this->sourcesDirs?$forceScanFiles:false;//force scanning make sense only if some dirs were specified
+		
+		if(is_file($this->configFileName))
+		{
+			include($this->configFileName);
+		}
 		
 		spl_autoload_register( array( $this, 'autoload' ));
 	}
@@ -54,8 +70,13 @@ class AutoloadManager
 	}
 	public function autoload($class)
 	{
-		$this->getDeclaredClasses();
-		
+		//scan source files if:
+		//sourceDirs is specified
+		//or forceScanFiles is set
+		if($this->sourcesDirs || $this->forceScanFiles)
+		{
+			$this->getDeclaredClasses();
+		}
 		include_once($this->declaredClasses[$class]);
 	}
 	protected function getSourceFileNames($sourcesDirs=null)
@@ -82,7 +103,7 @@ class AutoloadManager
 						$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
 						continue;
 					}
-					$sourceFileNames[]=$this->mapPath2ThisDir($file);
+					$sourceFileNames[$relativePath=$this->mapPath2ThisDir($file)]=$relativePath;
 				}
 			}
 		}
@@ -93,6 +114,35 @@ class AutoloadManager
 	{
 		if($sourceFileNames=$this->getSourceFileNames())
 		{
+			if($this->declaredClasses && $this->sourcesDirs && !$this->forceScanFiles)
+			{
+				//If there are declared classes info in the config file
+				//and $sourcesDir is specified
+				//and a force scan is not necessary
+				//then do a quick scan:
+				//find what source files were removed and remove their entries from $declaredClasses
+				//find what new files were added, scan them and their info to $declaredClasses
+				
+				//find removed file names
+				foreach($this->declaredClasses as $className=>$sourceFileName)
+				{
+					if(!isset($sourceFileNames[$sourceFileName]))
+					{//the file was deleted (or just moved)
+						unset($this->declaredClasses[$className]);
+						continue;
+					}
+
+					
+				}
+				foreach($this->declaredClasses as $className=>$sourceFileName)
+				{
+					//class source file name exists, skip it from scanning
+					//unset($sourceFileNames[$sourceFileName]);
+					unset($sourceFileNames[$sourceFileName]);
+				}
+				
+			}
+			
 			foreach($sourceFileNames as $sourceFileName)
 			{
 				$source=new PHPSource($sourceFileName);
@@ -105,6 +155,7 @@ class AutoloadManager
 					}
 				}
 			}
+			
 		}
 		return $this->declaredClasses;
 	}
