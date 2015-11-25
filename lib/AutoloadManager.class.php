@@ -83,4 +83,8 @@ class AutoloadManager
 	{
 		return $this->getSourceFileNames();
 	}
+	public function debugGetDeclaredClasses()
+	{
+		return $this->getDeclaredClasses();
+	}
 }
