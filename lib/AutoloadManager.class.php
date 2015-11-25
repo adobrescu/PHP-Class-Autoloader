@@ -43,7 +43,9 @@ class AutoloadManager
 		
 		return static::$___instance;
 	}
-	
+	public function __destruct()
+	{
+	}
 	public function autoload($class)
 	{
 		$this->getDeclaredClasses();
