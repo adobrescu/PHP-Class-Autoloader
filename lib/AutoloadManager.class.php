@@ -4,14 +4,15 @@ class AutoloadManager
 {
 	static protected $___instance;
 	
+	protected $sourcesDirs; //source locations to scan
 	protected $configFileName; //where to store classes list for later use
 	protected $forceScanFiles; //if true it doesn't use the config file at all
 	
-	protected function __construct($sourceDirs, $configFileName, $forceScanFiles)
+	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles)
 	{
-		if(!is_array($sourceDirs))
+		if(!is_array($sourcesDirs))
 		{
-			$sourceDirs=array($sourceDirs);
+			$sourcesDirs=array($sourcesDirs);
 		}
 		
 		if(is_dir($configFileName))
@@ -28,11 +29,11 @@ class AutoloadManager
 		spl_autoload_register( array( $this, 'autoload' ));
 	}
 	
-	static public function ___getInstance($sourceDirs, $configFileName, $forceScanFiles)
+	static public function ___getInstance($sourcesDirs, $configFileName, $forceScanFiles)
 	{
 		if(!static::$___instance)
 		{
-			static::$___instance=new static($sourceDirs, $configFileName, $forceScanFiles);
+			static::$___instance=new static($sourcesDirs, $configFileName, $forceScanFiles);
 			
 		}
 		
