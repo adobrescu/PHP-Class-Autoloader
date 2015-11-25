@@ -6,5 +6,7 @@ namespace SampleNS
 	{
 		
 	}
-	
+	class SampleClass2 extends SampleClass
+	{
+	}
 }
