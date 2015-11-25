@@ -25,6 +25,7 @@ class AutoloadManager
 		
 		$this->forceScanFiles=$forceScanFiles;
 		
+		spl_autoload_register( array( $this, 'autoload' ));
 	}
 	
 	static public function ___getInstance($sourceDirs, $configFileName, $forceScanFiles)
@@ -36,5 +37,9 @@ class AutoloadManager
 		}
 		
 		return static::$___instance;
+	}
+	
+	public function autoload()
+	{
 	}
 }
