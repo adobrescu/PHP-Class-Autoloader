@@ -41,5 +41,12 @@ class AutoloadManager
 	
 	public function autoload($class)
 	{
+		
+	}
+	protected function getSourceFileNames()
+	{
+	}
+	protected function getDeclaredClasses()
+	{
 	}
 }
