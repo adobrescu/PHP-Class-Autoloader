@@ -14,7 +14,7 @@ class AutoloadManager
 		{
 			$sourcesDirs=array($sourcesDirs);
 		}
-		
+		$this->sourcesDirs=$sourcesDirs;
 		if(is_dir($configFileName))
 		{
 			$this->configFileName=$configFileName.'/autoload-manager-config.php';
