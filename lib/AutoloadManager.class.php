@@ -4,7 +4,7 @@ class AutoloadManager
 {
 	static protected $___instance;
 	
-	protected function __constructor($sourceDirs, $configDir, $debug)
+	protected function __construct($sourceDirs, $configFileName, $debug)
 	{
 	}
 	
