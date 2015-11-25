@@ -91,7 +91,7 @@ class AutoloadManager
 				{
 					foreach($declaredClasses as $className=>$classInfo)
 					{
-						$this->declaredClasses[$className]=$this->mapPath2ThisDir($sourceFileName); //file names must be relative to the dir containing this class
+						$this->declaredClasses[substr($className,1)]=$this->mapPath2ThisDir($sourceFileName); //file names must be relative to the dir containing this class
 					}
 				}
 			}
