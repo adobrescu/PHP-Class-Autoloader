@@ -1,5 +1,7 @@
 <?php
 
+include_once(__DIR__.'/../../plugins-manager/lib/PHPSource.class.php');
+
 class AutoloadManager
 {
 	static protected $___instance;
@@ -7,6 +9,8 @@ class AutoloadManager
 	protected $sourcesDirs; //source locations to scan
 	protected $configFileName; //where to store classes list for later use
 	protected $forceScanFiles; //if true it doesn't use the config file at all
+	protected $declaredClasses=array();//list of found classes: 'class_name' => 'source_file';
+	
 	
 	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles)
 	{
@@ -77,6 +81,22 @@ class AutoloadManager
 	}
 	protected function getDeclaredClasses()
 	{
+		if($sourceFileNames=$this->getSourceFileNames())
+		{
+			foreach($sourceFileNames as $sourceFileName)
+			{
+				$source=new PHPSource($sourceFileName);
+				
+				if($declaredClasses=$source->getDeclaredClasses())
+				{
+					foreach($declaredClasses as $className=>$classInfo)
+					{
+						$this->declaredClasses[$className]=$sourceFileName;
+					}
+				}
+			}
+		}
+		return $this->declaredClasses;
 	}
 	
 	public function debugGetSourceFileNames()
