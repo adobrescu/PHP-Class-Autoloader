@@ -50,4 +50,9 @@ class AutoloadManager
 	protected function getDeclaredClasses()
 	{
 	}
+	
+	public function debugGetSourceFileNames()
+	{
+		return $this->getSourceFileNames();
+	}
 }
