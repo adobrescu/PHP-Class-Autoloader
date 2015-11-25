@@ -46,7 +46,9 @@ class AutoloadManager
 	
 	public function autoload($class)
 	{
+		$this->getDeclaredClasses();
 		
+		include_once($this->declaredClasses[$class]);
 	}
 	protected function getSourceFileNames($sourcesDirs=null)
 	{
