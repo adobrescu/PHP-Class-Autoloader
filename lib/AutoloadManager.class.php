@@ -103,6 +103,10 @@ class AutoloadManager
 						$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
 						continue;
 					}
+					if(pathinfo($file, PATHINFO_EXTENSION)!='php')
+					{
+						continue;
+					}
 					$sourceFileNames[$relativePath=$this->mapPath2ThisDir($file)]=$relativePath;
 				}
 			}
