@@ -82,7 +82,7 @@ class AutoloadManager
 						$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
 						continue;
 					}
-					$sourceFileNames[]=$file;
+					$sourceFileNames[]=$this->mapPath2ThisDir($file);
 				}
 			}
 		}
@@ -101,7 +101,7 @@ class AutoloadManager
 				{
 					foreach($declaredClasses as $className=>$classInfo)
 					{
-						$this->declaredClasses[substr($className,1)]=$this->mapPath2ThisDir($sourceFileName); //file names must be relative to the dir containing this class
+						$this->declaredClasses[substr($className,1)]=$sourceFileName; //file names must be relative to the dir containing this class
 					}
 				}
 			}
