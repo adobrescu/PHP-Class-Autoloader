@@ -1,10 +1,10 @@
 <?php
 
-include_once(__DIR__.'/../../plugins-manager/lib/PHPSource.class.php');
+include_once(__DIR__.'/PHPSource.class.php');
 
 class AutoloadManager
 {
-	static protected $___instance;
+	static protected $___instance;//singleton
 	
 	protected $sourcesDirs; //source locations to scan
 	protected $configFileName; //where to store classes list for later use
@@ -41,6 +41,7 @@ class AutoloadManager
 		
 		$this->forceScanFiles=$this->sourcesDirs?$forceScanFiles:false;//force scanning make sense only if some dirs were specified
 		
+		//include config file
 		if(is_file($this->configFileName))
 		{
 			include($this->configFileName);
