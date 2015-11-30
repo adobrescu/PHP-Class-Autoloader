@@ -121,6 +121,9 @@ class ClassAutoloader
 		if($this->sourcesDirs || $this->forceScanFiles)
 		{
 			$this->getDeclaredClasses();
+			
+			/* unset $sourcesDir and $forceScanFiles so at next call of autoload no scanning will be done */
+			$this->sourcesDirs=$this->forceScanFiles=null;
 		}
 		include_once($this->declaredClasses[$class]);
 	}
