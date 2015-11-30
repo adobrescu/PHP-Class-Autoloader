@@ -22,7 +22,7 @@ $this->ASSERT_EQUALS($declaredClasses['NS2\SubClass'], '../test-classes/lib/sub-
 
 $obj=new \SampleNS\SampleClass();
 
-echo "1\n";
+
 
 
 
