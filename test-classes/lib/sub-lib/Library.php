@@ -3,5 +3,5 @@
 class LibraryClass
 {
 	
-	
+	public $prop='Test';
 }

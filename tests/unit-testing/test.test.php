@@ -2,7 +2,7 @@
 
 $sourcesDir=__DIR__.'/../../test-classes';
 
-$am=AutoloadManager::___getInstance($sourcesDir, __DIR__.'/../../', false);
+$am=ClassAutoloader::___getInstance($sourcesDir, __DIR__.'/../../', false);
 
 
 $sourceFileNames=$am->debugGetSourceFileNames();
@@ -21,6 +21,8 @@ $this->ASSERT_EQUALS($declaredClasses['C2'], '../test-classes/lib/Class2.class.p
 $this->ASSERT_EQUALS($declaredClasses['NS2\SubClass'], '../test-classes/lib/sub-lib/OtherSources.php');
 
 $obj=new \SampleNS\SampleClass();
+
+echo "1\n";
 
 
 
