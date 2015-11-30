@@ -223,7 +223,8 @@ class ClassAutoloader
 			 */
 			foreach($sourceFileNames as $sourceFileName)
 			{
-				$source=new PHPSource($sourceFileName);
+				/* Paths are relative to this directory, pass absolute path to PHPSource */
+				$source=new PHPSource(realpath(__DIR__.'/'.$sourceFileName));
 				
 				if($declaredClasses=$source->getDeclaredClasses())
 				{
