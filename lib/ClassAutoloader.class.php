@@ -11,7 +11,7 @@ class ClassAutoloader
 	protected $configFileName; /* where to store classes list */
 	protected $forceScanFiles; /* if set then do a full scan and do not use the config file*/
 	protected $declaredClasses=array();/* keeps a list of declared classes, key => value : class name=> source filename  */
-	
+	protected $saveConfigFile=false;
 	/**
 	 * __construct
 	 * 
@@ -96,7 +96,7 @@ class ClassAutoloader
 		/*
 		save declared classes in the config file if there was any scanning
 		 */
-		if($this->sourcesDirs || $this->forceScanFiles)
+		if($this->saveConfigFile)
 		{
 			file_put_contents($this->configFileName, 
 					'<?php'.PHP_EOL.
@@ -124,6 +124,7 @@ class ClassAutoloader
 			
 			/* unset $sourcesDir and $forceScanFiles so at next call of autoload no scanning will be done */
 			$this->sourcesDirs=$this->forceScanFiles=null;
+			$this->saveConfigFile=true;
 		}
 		include_once($this->declaredClasses[$class]);
 	}
