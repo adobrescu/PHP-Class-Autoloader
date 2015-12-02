@@ -36,7 +36,7 @@ class ClassAutoloader
 		}
 		else
 		{
-			$this->configFileName=realpath($configFileName);
+			$this->configFileName=$configFileName;
 		}
 		
 		/*
