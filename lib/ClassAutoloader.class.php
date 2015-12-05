@@ -1,13 +1,15 @@
 <?php
 
 /*include class def needed for parsing sources*/
-include_once(__DIR__.'/PHPSource.class.php');
+/* include_once(__DIR__.'/PHPSource.class.php'); */
+include_once(__DIR__.'/../../plugins-manager/lib/PHPSource.class.php');
 
 class ClassAutoloader
 {
 	static protected $___instance;/* singleton */
 		
 	protected $sourcesDirs; /* sources locations to scan*/
+	protected $skipSourceDirs; /* source locations not to scan - usually backups */
 	protected $configFileName; /* where to store classes list */
 	protected $forceScanFiles; /* if set then do a full scan and do not use the config file*/
 	protected $declaredClasses=array();/* keeps a list of declared classes, key => value : class name=> source filename  */
@@ -21,14 +23,21 @@ class ClassAutoloader
 	 * @param string $configFileName
 	 * @param bool $forceScanFiles
 	 */
-	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles)
+	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array())
 	{
 	
 		if(!is_array($sourcesDirs))
 		{
 			$sourcesDirs=array($sourcesDirs);
 		}
-		$this->sourcesDirs=$sourcesDirs;
+		foreach($sourcesDirs as $sourcesDir)
+		{
+			$this->sourcesDirs[]=realpath($sourcesDir);
+		}
+		foreach($skipSourceDirs as $skipSourceDir)
+		{
+			$this->skipSourceDirs[]=realpath($skipSourceDir);
+		}
 		
 		if(is_dir($configFileName))
 		{/*config file default name*/
@@ -73,11 +82,11 @@ class ClassAutoloader
 	 * @param bool $forceScanFiles
 	 * @return ClassAutoloader
 	 */
-	static public function ___getInstance($sourcesDirs, $configFileName, $forceScanFiles)
+	static public function ___getInstance($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array())
 	{
 		if(!static::$___instance)
 		{
-			static::$___instance=new static($sourcesDirs, $configFileName, $forceScanFiles);
+			static::$___instance=new static($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs);
 			
 		}
 		
@@ -141,6 +150,8 @@ class ClassAutoloader
 	 */
 	protected function getSourceFileNames($sourcesDirs=null)
 	{
+		print_r($this->sourcesDirs);
+		echo ("\n");
 		if(!$sourcesDirs)
 		{
 			$sourcesDirs=$this->sourcesDirs;
@@ -160,7 +171,10 @@ class ClassAutoloader
 				{
 					if(is_dir($file))
 					{
-						$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
+						if(!in_array($file, $this->skipSourceDirs))
+						{
+							$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
+						}
 						continue;
 					}
 					if(pathinfo($file, PATHINFO_EXTENSION)!='php')
