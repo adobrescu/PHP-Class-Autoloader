@@ -100,7 +100,7 @@ class PHPSource
 		}
 		
 		$classBrakets=0;//folosit pentru a vedea daca sintem in interiorul unei clase
-		
+		$prevCodeToken=0;
 		for($i; $i<count($this->tokens); $i++)
 		{
 			switch($this->tokens[$i][0])
@@ -118,6 +118,7 @@ class PHPSource
 							end($this->classes);//[$this->currentNS]);
 							$lastFullClassName=key($this->classes);
 							$this->classes[$lastFullClassName]['end_token']=$i;
+							$prevCodeToken=$i+1;
 						}
 					}
 						
@@ -127,7 +128,7 @@ class PHPSource
 					$this->currentNS='\\'.$this->rebuildSource($i+1, $nsNameEndToken-1, false);
 					
 					$i=$nsNameEndToken;
-					
+					$prevCodeToken=$i+1;
 					break;
 				case T_CLASS:
 					$classBrakets=0;
@@ -151,7 +152,8 @@ class PHPSource
 							'extends' => '',
 							static::EXTENDS_START_TOKEN => -1,
 							static::EXTENDS_END_TOKEN => -1,
-							static::EXTENDED_CLASS_FULL_CLASS_NAME => ''
+							static::EXTENDED_CLASS_FULL_CLASS_NAME => '',
+							'prev_code_token' => $prevCodeToken
 							);
 					
 					$i=$classNameEndToken-1;
