@@ -8,8 +8,8 @@ class ClassAutoloader
 {
 	static protected $___instance;/* singleton */
 		
-	protected $sourcesDirs; /* sources locations to scan*/
-	protected $skipSourceDirs; /* source locations not to scan - usually backups */
+	protected $sourcesDirs=array(); /* sources locations to scan*/
+	protected $skipSourceDirs=array(); /* source locations not to scan - usually backups */
 	protected $configFileName; /* where to store classes list */
 	protected $forceScanFiles; /* if set then do a full scan and do not use the config file*/
 	protected $declaredClasses=array();/* keeps a list of declared classes, key => value : class name=> source filename  */
@@ -150,8 +150,6 @@ class ClassAutoloader
 	 */
 	protected function getSourceFileNames($sourcesDirs=null)
 	{
-		print_r($this->sourcesDirs);
-		echo ("\n");
 		if(!$sourcesDirs)
 		{
 			$sourcesDirs=$this->sourcesDirs;
