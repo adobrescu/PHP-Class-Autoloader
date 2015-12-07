@@ -14,6 +14,8 @@ class ClassAutoloader
 	protected $forceScanFiles; /* if set then do a full scan and do not use the config file*/
 	protected $declaredClasses=array();/* keeps a list of declared classes, key => value : class name=> source filename  */
 	protected $saveConfigFile=false;
+	protected $sourceExtensions=array(); /* extensions of files to scan */
+	protected $skipSourceExtensions=array(); /* extensions of files to skip at scanning */
 	/**
 	 * __construct
 	 * 
@@ -23,7 +25,7 @@ class ClassAutoloader
 	 * @param string $configFileName
 	 * @param bool $forceScanFiles
 	 */
-	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array())
+	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array(), $sourceExtensions, $skipSourceExtensions)
 	{
 	
 		if(!is_array($sourcesDirs))
@@ -47,6 +49,9 @@ class ClassAutoloader
 		{
 			$this->configFileName=$configFileName;
 		}
+		
+		$this->sourceExtensions=$sourceExtensions;
+		$this->skipSourceExtensions=$skipSourceExtensions;
 		
 		/*
 		- if no $sourcesDirs are specified then declared classes info is loaded from the config file
@@ -82,11 +87,11 @@ class ClassAutoloader
 	 * @param bool $forceScanFiles
 	 * @return ClassAutoloader
 	 */
-	static public function ___getInstance($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array())
+	static public function ___getInstance($sourcesDirs=array(), $configFileName=null, $forceScanFiles=false, $skipSourceDirs=array(), $sourceExtensions=array('php'), $skipSourceExtensions=array())
 	{
 		if(!static::$___instance)
 		{
-			static::$___instance=new static($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs);
+			static::$___instance=new static($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs, $sourceExtensions, $skipSourceExtensions);
 			
 		}
 		
@@ -138,7 +143,16 @@ class ClassAutoloader
 		include_once($this->declaredClasses[$class]);
 	}
 	
-
+	public function getClassFileName($className)
+	{
+		if($className[0]=='\\')
+		{
+			$className=substr($className, 1);
+		}
+		
+		return isset($this->declaredClasses[$className]) ? realpath(__DIR__.'/'.$this->declaredClasses[$className]) : null;
+	}
+	
 	/**
 	 * 
 	 * getSourceFileNames
@@ -175,7 +189,12 @@ class ClassAutoloader
 						}
 						continue;
 					}
-					if(pathinfo($file, PATHINFO_EXTENSION)!='php')
+										
+					preg_match('|[^\.][.](.+)$|i', $file, $matches);
+					$extension=$matches[1];
+					
+					if(!in_array($extension, $this->sourceExtensions)
+						|| in_array($extension, $this->skipSourceExtensions) )
 					{
 						continue;
 					}
