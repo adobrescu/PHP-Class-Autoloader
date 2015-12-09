@@ -2,10 +2,12 @@
 
 include_once(__DIR__.'/../lib/ClassAutoloader.class.php');
 
+$dir=realpath(__DIR__.'/../../laravel/vendor');
+$dir=realpath(__DIR__.'/../../ZendFramework-2.4.9');
 echo '<pre>';
-echo '<br><br>Scan '.realpath(__DIR__.'/test-classes').'.<br><br>Paths are relative to the directory where the file that defines ClassAutoloader is stored:<br><br>';
+echo '<br><br>Scan '.$dir.'.<br><br>Paths are relative to the directory where the file that defines ClassAutoloader is stored:<br><br>';
 $ca=ClassAutoloader::___getInstance(
-		array(__DIR__.'/../test-classes/'),
+		array($dir),
 		__DIR__.'/../class-autoloader-config.php',
 		true
 		,
