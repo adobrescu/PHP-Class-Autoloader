@@ -31,7 +31,7 @@ class PHPSource
 	protected $classes=array(), $classAliases=array(), $currentNS='';
 	public function __construct($filename)
 	{
-		$this->filename=$filename;
+		$this->filename=realpath($filename);
 		//include($this->filename);
 		$this->tokens=token_get_all(file_get_contents($this->filename));
 		foreach($this->tokens as $i=>$token)
@@ -52,11 +52,11 @@ class PHPSource
 		
 		for($i=$start; $i>=0; $i--)
 		{
-			if($this->tokens[$i][0]!=T_COMMENT && $this->tokens[$i][0]!=T_WHITESPACE)
+			if($this->tokens[$i][0]!=T_COMMENT && $this->tokens[$i][0]!=T_DOC_COMMENT && $this->tokens[$i][0]!=T_WHITESPACE)
 			{
 				return null;
 			}
-			if($this->tokens[$i][0]==T_COMMENT)
+			if($this->tokens[$i][0]==T_COMMENT || $this->tokens[$i][0]==T_DOC_COMMENT)
 			{
 				break;
 			}
@@ -69,7 +69,7 @@ class PHPSource
 		
 		static $pattern="(([a-z0-9\-\_]+)[\s]*:[\s]*(.*))+";
 			
-		preg_match_all('/'.$pattern.'/', $this->tokens[$i][1], $matches);
+		preg_match_all('/'.$pattern.'/i', $this->tokens[$i][1], $matches);
 		
 		$settings=array();
 		
@@ -100,7 +100,8 @@ class PHPSource
 		}
 		
 		$classBrakets=0;//folosit pentru a vedea daca sintem in interiorul unei clase
-		$prevCodeToken=0;
+		$prevCodeToken=1;
+		
 		for($i; $i<count($this->tokens); $i++)
 		{
 			switch($this->tokens[$i][0])
@@ -115,9 +116,12 @@ class PHPSource
 						$classBrakets--;
 						if($classBrakets==0)
 						{
-							end($this->classes);//[$this->currentNS]);
-							$lastFullClassName=key($this->classes);
-							$this->classes[$lastFullClassName]['end_token']=$i;
+							if($this->classes)
+							{
+								end($this->classes);//[$this->currentNS]);
+								$lastFullClassName=key($this->classes);
+								$this->classes[$lastFullClassName]['end_token']=$i;
+							}
 							$prevCodeToken=$i+1;
 						}
 					}
@@ -131,12 +135,30 @@ class PHPSource
 					$prevCodeToken=$i+1;
 					break;
 				case T_CLASS:
+					if($classBrakets!=0)
+					{
+						break;
+					}
+					
+					/* a class declaration or a SomeClass::class*/
+					$doubleColonToken=$this->getPreviousAllowedTokensStart($i-1, array(T_DOUBLE_COLON), false);
+					if ($doubleColonToken!=-1)
+					{
+						/* previous double colon found, skip the keyword*/
+						continue;
+					}
+					
 					$classBrakets=0;
 					$classNameEndToken=$this->findNextTokens($i+1, array(T_EXTENDS, T_IMPLEMENTS, '{'));
 					$className=$this->rebuildSource($i+1, $classNameEndToken-1, false);
 					
 					$signatureEndToken=$this->findNextTokens($i+1, array('{'))-1;
 					$signatureStartToken=$this->getPreviousAllowedTokensStart($i-1, array(T_CLASS, T_ABSTRACT, T_FINAL));
+					
+					if($signatureStartToken==-1)
+					{
+						$signatureStartToken=$i-1;
+					}
 					
 					$this->classes[$this->currentNS.'\\'.$className]=array(
 							'index' => count($this->classes),
@@ -164,20 +186,22 @@ class PHPSource
 					$baseClassName=$this->rebuildSource($i+1, $baseClassNameEndToken-1, false);
 					
 					
-					end($this->classes);//[$this->currentNS]);
-					$lastFullClassName=key($this->classes);
-					$this->classes[$lastFullClassName]['extends']=$baseClassName;
-					
-					if($baseClassName[0]!='\\')
+					if($this->classes)
 					{
-						$baseClassName=$this->currentNS.'\\'.$baseClassName;
+						end($this->classes);//[$this->currentNS]);
+						$lastFullClassName=key($this->classes);
+						$this->classes[$lastFullClassName]['extends']=$baseClassName;
+
+						if($baseClassName[0]!='\\')
+						{
+							$baseClassName=$this->currentNS.'\\'.$baseClassName;
+						}
+
+
+						$this->classes[$lastFullClassName][PHPSource::EXTENDED_CLASS_FULL_CLASS_NAME]=$baseClassName;
+						$this->classes[$lastFullClassName][static::EXTENDS_START_TOKEN]=$i+2;
+						$this->classes[$lastFullClassName][static::EXTENDS_END_TOKEN]=$baseClassNameEndToken-2;//backwards -2 : -1 to skip ";"; -1 to skipt the whitespace after extended class name 
 					}
-					
-					
-					$this->classes[$lastFullClassName][PHPSource::EXTENDED_CLASS_FULL_CLASS_NAME]=$baseClassName;
-					$this->classes[$lastFullClassName][static::EXTENDS_START_TOKEN]=$i+2;
-					$this->classes[$lastFullClassName][static::EXTENDS_END_TOKEN]=$baseClassNameEndToken-2;//backwards -2 : -1 to skip ";"; -1 to skipt the whitespace after extended class name 
-					
 					$i=$baseClassNameEndToken-1;
 					
 					break;
@@ -238,6 +262,7 @@ class PHPSource
 	}
 	protected function getPreviousAllowedTokensStart($start, $allowedTokens, $allowWhitespaces=true)
 	{
+		$numAllowedTokens=0;
 		for($i=$start; $i>0; $i--)
 		{
 			$isTokenAllowed=false;
@@ -251,18 +276,20 @@ class PHPSource
 					gettype($allowedToken)=='integer' && $this->tokens[$i][0]==$allowedToken)
 				{
 					$isTokenAllowed=true;
+					$numAllowedTokens++;
 					break;
 				}
 			}
 			if(!$isTokenAllowed)
 			{
-				//echo token_name($this->tokens[$i][0]).' '.$this->tokens[$i][1];
-				//echo "\n";
 				break;
 				
 			}
 		}
-		
+		if($numAllowedTokens==0)
+		{
+			return -1;
+		}
 		if($allowWhitespaces && $this->tokens[$i+1][0]==T_WHITESPACE)// && !in_array(T_WHITESPACE, $allowedTokens))
 		{
 			$offset=2;
@@ -345,7 +372,7 @@ class PHPSource
 		return $source;
 	}
 	public function renameExtendedClass($fullClassName, $newExtendedFullClassName, $commentSignature=true)
-	{
+	{ 
 		$classNameParts=static::___getClassNameParts($fullClassName);
 		$newExtendedClassNameParts=static::___getClassNameParts($newExtendedFullClassName);
 		
@@ -366,9 +393,44 @@ class PHPSource
 		
 		if($commentSignature)
 		{
-			$this->insertComment($this->classes[$fullClassName]['signature_start_token']-1, array('Original signature:', $this->classes[$fullClassName]['signature']));
+			$signatureStartToken=$this->classes[$fullClassName]['signature_start_token']-1;
+			if(($commentToken=$this->getPreviousCommentToken($signatureStartToken))==-1)
+			{
+				$commentToken=$signatureStartToken;
+			}
+			
+			$this->insertComment($commentToken, array('Original signature:', $this->classes[$fullClassName]['signature']));
 		}
 		
+	}
+	public function getClassComment($fullClassName)
+	{
+		$signatureStartToken=$this->classes[$fullClassName]['signature_start_token']-1;
+		if(($commentToken=$this->getPreviousCommentToken($signatureStartToken))!=-1)
+		{
+			return $this->tokens[$commentToken][1];
+		}
+	}
+	public function getUseComment($fullClassName)
+	{
+		return '';
+		$signatureStartToken=$this->classes[$fullClassName]['signature_start_token']-1;
+		if(($commentToken=$this->getPreviousCommentToken($signatureStartToken))!=-1)
+		{
+			return $this->tokens[$commentToken][1];
+		}
+	}
+	public function getPreviousCommentToken($token)
+	{	
+		while($this->tokens[$token][0]==T_WHITESPACE && $token>=0)
+		{
+			$token--;
+		}
+		if($this->tokens[$token][0]==T_COMMENT || $this->tokens[$token][0]==T_DOC_COMMENT)
+		{
+			return $token;
+		}
+		return -1;
 	}
 	public function renameUseClass($classFullName, $newUseFullClassName, $commentStatement=true)
 	{
@@ -407,35 +469,45 @@ class PHPSource
 		
 		if($commentStatement)
 		{
-			$this->insertComment($this->classes[$fullClassName]['signature_start_token']-1, array('Original signature:', $this->classes[$fullClassName]['signature']));
+			$comment='Original signature:'.PHP_EOL.$this->classes[$fullClassName]['signature'];
+			$this->insertComment($this->classes[$fullClassName]['signature_start_token']-1, $comment);
 		}
 	}
-	public function insertCode($token, $code)
+	
+	public function insertCode($token, $code, $append=true)
 	{
 		$this->tokens[$token][0]=-1;
-		$this->tokens[$token][1].=$code;
+		if($append)
+		{
+			$this->tokens[$token][1].=$code;
+		}
+		else
+		{
+			$this->tokens[$token][1]=$code.$this->tokens[$token][1];
+		}
 	}
-	public function insertComment($token, $commentLines)
+	
+	public function insertComment($token, $commentLines, $stick2Comment=true, $append=true, $prependAsterisk=' * ')
 	{
+		/**
+		 * if $stick2Comment then and $token is a comment, then stick $commentLines to comment from $token
+		 */
 		if(!is_array($commentLines))
 		{
-			$commentLines=array($commentLines);
+			$commentLines=explode(PHP_EOL, $commentLines);
 		}
 		if($token<0)
 		{
 			$token=count($this->tokens)-1+$token;
 		}
-		if(!isset($this->tokens[$token]))
-		{
-			print_r($commentLines);
-			//die(''.$token);
-		}
 		
-		if($this->tokens[$token][0]==T_WHITESPACE)
+		$whiteSpaceToken=$this->tokens[$token][0]==T_COMMENT || $this->tokens[$token][0]==T_DOC_COMMENT ? $token+1:$token;
+		
+		if($this->tokens[$whiteSpaceToken][0]==T_WHITESPACE)
 		{
 			//detect identation: 
 			//tabs & spaces after the last new line character
-			$tabs=substr($this->tokens[$token][1], strrpos($this->tokens[$token][1], "\n")+1);
+			$tabs=substr($this->tokens[$whiteSpaceToken][1], strrpos($this->tokens[$whiteSpaceToken][1], "\n")+1);
 		}	
 		else
 		{
@@ -446,11 +518,28 @@ class PHPSource
 		
 		foreach($commentLines as $commentLine)
 		{
-			$comment .= ($comment?PHP_EOL.$tabs:'').$commentLine;
+			$comment .= ($comment?PHP_EOL.$tabs:'').$prependAsterisk.$commentLine;
 		}
 		
-		$this->tokens[$token][0]=-1;
-		$this->tokens[$token][1]=PHP_EOL.'/*'.PHP_EOL.$tabs.$comment.PHP_EOL.$tabs."*/".PHP_EOL.$tabs;
+		if( ( $this->tokens[$token][0]==T_COMMENT || $this->tokens[$token][0]==T_DOC_COMMENT) && $stick2Comment)
+		{
+			$this->tokens[$token][1]=substr($this->tokens[$token][1], 0, -2);
+			$openComment='';
+		}
+		else
+		{
+			$this->tokens[$token][0]=-1;
+			$openComment='/*';
+		}
+		
+		if($append)
+		{
+			$this->tokens[$token][1].=PHP_EOL.$openComment.PHP_EOL.$tabs.$comment.PHP_EOL.$tabs."*/".PHP_EOL.$tabs;
+		}
+		else
+		{
+			$this->tokens[$token][1]=PHP_EOL.$openComment.PHP_EOL.$tabs.$comment.PHP_EOL.$tabs."*/".PHP_EOL.$tabs.$this->tokens[$token][1];
+		}
 	}
 	static public function ___getClassNameParts($className)
 	{
@@ -472,6 +561,10 @@ class PHPSource
 		
 		$classNameOrAlias=$this->classAliases[$alias]['class_full_name_or_alias'];
 		
+		if($classNameOrAlias==$alias)
+		{
+			return $classNameOrAlias;
+		}
 		
 		if(isset($this->classAliases[$classNameOrAlias]))
 		{
@@ -495,6 +588,10 @@ class PHPSource
 	public function getToken($i)
 	{
 		return $this->tokens[$i];
+	}
+	public function save()
+	{
+		file_put_contents($this->filename, $this->rebuildSource());
 	}
 }
 
