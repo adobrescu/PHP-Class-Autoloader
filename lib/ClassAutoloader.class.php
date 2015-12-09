@@ -30,7 +30,7 @@ class ClassAutoloader
 	
 		if(!is_array($sourcesDirs))
 		{
-			$sourcesDirs=array($sourcesDirs);
+			$sourcesDirs=$sourcesDirs?array($sourcesDirs):array();
 		}
 		foreach($sourcesDirs as $sourcesDir)
 		{
@@ -109,7 +109,8 @@ class ClassAutoloader
 	{
 		/*
 		save declared classes in the config file if there was any scanning
-		 */
+		*/
+		
 		if($this->saveConfigFile)
 		{
 			file_put_contents($this->configFileName, 
@@ -132,13 +133,11 @@ class ClassAutoloader
 			- sourceDirs is specified
 			- or forceScanFiles is set
 		 */
-		if($this->sourcesDirs || $this->forceScanFiles)
+		if($this->sourcesDirs)
 		{
 			$this->getDeclaredClasses();
-			
 			/* unset $sourcesDir and $forceScanFiles so at next call of autoload no scanning will be done */
 			$this->sourcesDirs=$this->forceScanFiles=null;
-			$this->saveConfigFile=true;
 		}
 		include_once($this->declaredClasses[$class]);
 	}
@@ -181,6 +180,7 @@ class ClassAutoloader
 			{
 				foreach($files as $file)
 				{
+					//echo $file.'<br>';
 					if(is_dir($file))
 					{
 						if(!in_array($file, $this->skipSourceDirs))
@@ -220,6 +220,13 @@ class ClassAutoloader
 	 */
 	protected function getDeclaredClasses()
 	{
+		if(!$this->sourcesDirs)
+		{
+			return $this->declaredClasses;
+		}
+		
+		$this->saveConfigFile=true;
+		
 		if($sourceFileNames=$this->getSourceFileNames())
 		{
 			/*
