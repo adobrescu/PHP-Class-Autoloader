@@ -25,7 +25,7 @@ class ClassAutoloader
 	 * @param string $configFileName
 	 * @param bool $forceScanFiles
 	 */
-	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs=array(), $sourceExtensions, $skipSourceExtensions)
+	protected function __construct($sourcesDirs, $configFileName, $forceScanFiles, $skipSourceDirs, $sourceExtensions, $skipSourceExtensions)
 	{
 	
 		if(!is_array($sourcesDirs))
@@ -87,7 +87,7 @@ class ClassAutoloader
 	 * @param bool $forceScanFiles
 	 * @return ClassAutoloader
 	 */
-	static public function ___getInstance($sourcesDirs=array(), $configFileName=null, $forceScanFiles=false, $skipSourceDirs=array(), $sourceExtensions=array('php'), $skipSourceExtensions=array())
+	static public function ___getInstance($sourcesDirs=array(), $configFileName=null, $forceScanFiles=false, $skipSourceDirs=array(), $sourceExtensions=array(), $skipSourceExtensions=array())
 	{
 		if(!static::$___instance)
 		{
@@ -191,9 +191,13 @@ class ClassAutoloader
 					}
 										
 					preg_match('|[^\.][.](.+)$|i', $file, $matches);
+					if(!isset($matches[1]))
+					{
+						continue;
+					}
 					$extension=$matches[1];
 					
-					if(!in_array($extension, $this->sourceExtensions)
+					if( ($this->sourceExtensions && !in_array($extension, $this->sourceExtensions) )
 						|| in_array($extension, $this->skipSourceExtensions) )
 					{
 						continue;
