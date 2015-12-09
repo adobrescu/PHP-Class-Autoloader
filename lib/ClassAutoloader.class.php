@@ -189,8 +189,10 @@ class ClassAutoloader
 						}
 						continue;
 					}
-										
-					preg_match('|[^\.][.](.+)$|i', $file, $matches);
+					
+					$baseName=pathinfo($file, PATHINFO_BASENAME);
+					preg_match('|[^\.][.](.+)$|', $baseName, $matches);
+					
 					if(!isset($matches[1]))
 					{
 						continue;
