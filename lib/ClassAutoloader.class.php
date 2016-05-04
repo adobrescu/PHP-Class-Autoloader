@@ -139,7 +139,7 @@ class ClassAutoloader
 			/* unset $sourcesDir and $forceScanFiles so at next call of autoload no scanning will be done */
 			$this->sourcesDirs=$this->forceScanFiles=null;
 		}
-		include_once($this->declaredClasses[$class]);
+		include_once($this->getClassFileName($class));
 	}
 	
 	public function getClassFileName($className)
