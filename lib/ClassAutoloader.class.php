@@ -1,8 +1,7 @@
 <?php
 
 /*include class def needed for parsing sources*/
-/* include_once(__DIR__.'/PHPSource.class.php'); */
-include_once(__DIR__.'/../../plugins-manager/lib/PHPSource.class.php');
+include_once(__DIR__.'/PHPSource.class.php');
 
 class ClassAutoloader
 {

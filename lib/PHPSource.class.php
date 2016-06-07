@@ -134,7 +134,10 @@ class PHPSource
 					$i=$nsNameEndToken;
 					$prevCodeToken=$i+1;
 					break;
+				case T_TRAIT:
+				case T_INTERFACE: 
 				case T_CLASS:
+				
 					if($classBrakets!=0)
 					{
 						break;
@@ -175,7 +178,8 @@ class PHPSource
 							static::EXTENDS_START_TOKEN => -1,
 							static::EXTENDS_END_TOKEN => -1,
 							static::EXTENDED_CLASS_FULL_CLASS_NAME => '',
-							'prev_code_token' => $prevCodeToken
+							'prev_code_token' => $prevCodeToken,
+							'is_interface' => $this->tokens[$i]==T_INTERFACE
 							);
 					
 					$i=$classNameEndToken-1;
@@ -399,7 +403,7 @@ class PHPSource
 				$commentToken=$signatureStartToken;
 			}
 			
-			$this->insertComment($commentToken, array('Original signature:', $this->classes[$fullClassName]['signature']));
+			$this->insertComment($commentToken, array('Original signature:  ', $this->classes[$fullClassName]['signature']));
 		}
 		
 	}
@@ -435,9 +439,13 @@ class PHPSource
 	public function renameUseClass($classFullName, $newUseFullClassName, $commentStatement=true)
 	{
 		
-		//echo 'Rename use '.$classFullName.' to ' .$newUseFullClassName.': '.
+		
 		$baseClassName=$this->getAliasClassName($this->classes[$classFullName][static::EXTENDED_CLASS_FULL_CLASS_NAME]);
 		$aliasInfo=$this->classAliases[$this->classes[$classFullName][static::EXTENDED_CLASS_FULL_CLASS_NAME]];
+		if($baseClassName==$newUseFullClassName)
+		{
+			return;
+		}
 		
 		for($i=$aliasInfo['use_start_token']; $i<$aliasInfo['use_end_token']-1; $i++)
 		{
