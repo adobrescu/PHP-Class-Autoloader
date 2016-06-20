@@ -309,6 +309,10 @@ class ClassAutoloader
 		
 		for($i=0; $i<$pathMinLen; $i++)
 		{
+			if($path[$i]=='/')
+			{
+				$iMatch=$i;
+			}
 			if($path[$i]!=$DIR[$i])
 			{
 				break;
@@ -316,8 +320,8 @@ class ClassAutoloader
 		}
 		
 		
-		$path=substr($path, $i);
-		$DIR=substr($DIR, $i);
+		$path=substr($path, $iMatch+1);
+		$DIR=substr($DIR, $iMatch+1);
 		
 		/*
 		 * format relative path:
