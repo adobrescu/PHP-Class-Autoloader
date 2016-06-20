@@ -182,6 +182,10 @@ class ClassAutoloader
 					//echo $file.'<br>';
 					if(is_dir($file))
 					{
+						if($file==__DIR__)
+						{
+							continue;
+						}
 						if(!in_array($file, $this->skipSourceDirs))
 						{
 							$sourceFileNames=array_merge($sourceFileNames, $this->getSourceFileNames($file));
